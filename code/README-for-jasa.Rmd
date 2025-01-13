@@ -1,0 +1,127 @@
+---
+title: "README"
+author: ""
+date: "01/31/2025"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+################# set working directory #################
+# please specify the path
+path="/Users/rakheon_kim/Desktop/Research/SparseCovReg/"
+```
+
+
+## Numbers for tables: MA(1) model under Setting 1 with n=200, p=50, q=30
+Numbers for other settings can be obtained by loading the R data for each setting.
+```{r}
+load(file=paste0(path,"data/fit/fit_n200p50q30_MA_set1.RData"))
+# Table 1
+mean(S_diff); mean(ST_diff); mean(covreg_diff); mean(lse_diff); mean(covlpd_diff)
+sd(S_diff); sd(ST_diff); sd(covreg_diff); sd(lse_diff); sd(covlpd_diff)
+# Table 2
+mean(sqrt(covl_err_est)); sd(sqrt(covl_err_est)); mean(lasso_TPR); mean(lasso_FPR)
+# Table 3
+colMeans(tb_COV)
+```
+
+
+## Figure 1
+```{r}
+load(file=paste0(path,"data/fit/fit_n500p50q30_MA_set1.RData"))
+# Code for creating the picture can be found in simul.R
+```
+
+```{r, echo=FALSE}
+par(mfrow=c(1,4), mar = c(2, 1, 2, 1))
+plot(Sigma_12_mat[100,], S_12_mat[100,], cex=0.1, ylim = c(-0.5,1.5), xlab="", ylab="", yaxt="n", xaxt="n")
+points(Sigma_12_mat[99,], S_12_mat[99,], cex=0.1, ylim = c(-0.5,1.5), xlab="", ylab="", yaxt="n", xaxt="n")
+points(Sigma_12_mat[96,], S_12_mat[96,], cex=0.1, ylim = c(-0.5,1.5), xlab="", ylab="", yaxt="n", xaxt="n")
+points(Sigma_12_mat[1,], S_12_mat[1,], cex=0.1, ylim = c(-0.5,1.5), xlab="", ylab="", yaxt="n", xaxt="n")
+points(Sigma_12_mat[21,], S_12_mat[21,], cex=0.1, ylim = c(-0.5,1.5), xlab="", ylab="", yaxt="n", xaxt="n")
+axis(2, at = c(-0.5,0.0,0.5,1.0,1.5), labels = NA)
+axis(1, at = c(0.0, 0.1, 0.2, 0.3, 0.4, 0.5), labels = NA)
+
+plot(Sigma_12_mat[100,], covreg_12_mat[100,], cex=0.1, ylim = c(-0.5,1.5), xlab="", ylab="", yaxt="n", xaxt="n")
+points(Sigma_12_mat[99,], covreg_12_mat[99,], cex=0.1, ylim = c(-0.5,1.5), xlab="", ylab="", yaxt="n", xaxt="n")
+points(Sigma_12_mat[96,], covreg_12_mat[96,], cex=0.1, ylim = c(-0.5,1.5), xlab="", ylab="", yaxt="n", xaxt="n")
+points(Sigma_12_mat[1,], covreg_12_mat[1,], cex=0.1, ylim = c(-0.5,1.5), xlab="", ylab="", yaxt="n", xaxt="n")
+points(Sigma_12_mat[21,], covreg_12_mat[21,], cex=0.1, ylim = c(-0.5,1.5), xlab="", ylab="", yaxt="n", xaxt="n")
+axis(2, at = c(-0.5,0.0,0.5,1.0,1.5), labels = NA)
+axis(1, at = c(0.0, 0.1, 0.2, 0.3, 0.4, 0.5), labels = NA)
+
+plot(Sigma_12_mat[100,], lse_12_mat[100,], cex=0.1, ylim = c(-0.5,1.5), xlab="", ylab="", yaxt="n", xaxt="n")
+points(Sigma_12_mat[99,], lse_12_mat[99,], cex=0.1, ylim = c(-0.5,1.5), xlab="", ylab="", yaxt="n", xaxt="n")
+points(Sigma_12_mat[96,], lse_12_mat[96,], cex=0.1, ylim = c(-0.5,1.5), xlab="", ylab="", yaxt="n", xaxt="n")
+points(Sigma_12_mat[1,], lse_12_mat[1,], cex=0.1, ylim = c(-0.5,1.5), xlab="", ylab="", yaxt="n", xaxt="n")
+points(Sigma_12_mat[21,], lse_12_mat[21,], cex=0.1, ylim = c(-0.5,1.5), xlab="", ylab="", yaxt="n", xaxt="n")
+axis(2, at = c(-0.5,0.0,0.5,1.0,1.5), labels = NA)
+axis(1, at = c(0.0, 0.1, 0.2, 0.3, 0.4, 0.5), labels = NA)
+
+plot(Sigma_12_mat[100,], covl_12_mat[100,], cex=0.1, ylim = c(-0.5,1.5), xlab="", ylab="", yaxt="n", xaxt="n")
+points(Sigma_12_mat[99,], covl_12_mat[99,], cex=0.1, ylim = c(-0.5,1.5), xlab="", ylab="", yaxt="n", xaxt="n")
+points(Sigma_12_mat[96,], covl_12_mat[96,], cex=0.1, ylim = c(-0.5,1.5), xlab="", ylab="", yaxt="n", xaxt="n")
+points(Sigma_12_mat[1,], covl_12_mat[1,], cex=0.1, ylim = c(-0.5,1.5), xlab="", ylab="", yaxt="n", xaxt="n")
+points(Sigma_12_mat[21,], covl_12_mat[21,], cex=0.1, ylim = c(-0.5,1.5), xlab="", ylab="", yaxt="n", xaxt="n")
+axis(2, at = c(-0.5,0.0,0.5,1.0,1.5), labels = NA)
+axis(1, at = c(0.0, 0.1, 0.2, 0.3, 0.4, 0.5), labels = NA)
+```
+
+
+## Figure 2
+```{r}
+load(file=paste0(path,"data/fit/fit_n500p50q100_MA_set2.RData"))
+# Code for creating the picture can be found in simul.R
+```
+
+```{r, echo=FALSE}
+library(ggplot2)
+gfg<-round(data.frame(x = 1:(p*(p-1)/2),
+                      y = covl_betaU[2,],
+                      w = Sigma_off[2,],
+                      low = covl_betaU_025[2,],
+                      up = covl_betaU_975[2,]), 4)
+nzid=which(Sigma_off[2,]!=0)
+zid = nzid +1; zid = zid[1:48]
+gfg4 = gfg[c(nzid, zid),]; gfg4$x=1:97
+ggplot(gfg4, aes(x, w, y)) + geom_point(shape=1) + geom_point(aes(x,y)) + geom_errorbar(aes(ymin = low, ymax = up)) + scale_y_continuous(breaks=c(-1.5,-1,-0.5,0,0.5,1,1.5)) + theme_bw() + theme(axis.title = element_blank(),axis.text = element_text(size=10),panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.background = element_blank(),legend.position="none")
+```
+
+
+## Figure S2
+```{r}
+library(mvtnorm)
+n=200; p=2; q=3; ii=1
+set.seed(10000*ii)
+z = matrix(runif(n*q), ncol=q)
+z = cbind(z, z[,1]*z, z[,2]*z[,2:3], z[,3]*z[,3])
+B0 = matrix(c(1,-1,1,1), ncol=2)
+C0 = B0 %*% diag(c(1,1/3)) %*% t(B0) # diag(2) # B0 %*% diag(c(1,1/3)) %*% t(B0)
+z1 = cbind(matrix(1,nrow=n,ncol=1), z[,1])
+Sigma_indiv = array(0, dim=c(p,p,n))
+dat = matrix(0, nrow = n, ncol = p)
+for (i in 1:n){
+  Sigma_indiv[1:2,1:2,i] = (C0/2) + (B0/2)%*%z1[i,]%*%t(z1[i,])%*%t(B0/2)
+  dat[i,] = rmvnorm(1,mean=rep(0,p),sigma=Sigma_indiv[,,i])
+}
+par(mfrow=c(1,2), mar = c(2, 2, 2, 1))
+plot(z[,1], Sigma_indiv[1,2,], col="white", pch=16, ylim=c(-6,2), xlab=NA, ylab=NA)
+points(z[,1], (dat[,1]-mean(dat[,1]))*(dat[,2]-mean(dat[,2])), cex=0.5, pch=16)
+plot(z[,2], Sigma_indiv[1,2,], col="white", pch=16, ylim=c(-6,2), xlab=NA, ylab=NA)
+points(z[,2], (dat[,1]-mean(dat[,1]))*(dat[,2]-mean(dat[,2])), cex=0.5, pch=16)
+```
+
+## Numbers for Supplement S9 (when q=1)
+Numbers for other settings can be obtained by loading the R data for each setting.
+```{r}
+load(file=paste0(path,"data/supp/supp_q1.RData"))
+# Table S1
+mean(covreg_mcmc_diff); mean(covl_diff3); mean(covl_diff)
+sd(covreg_mcmc_diff); sd(covl_diff3); sd(covl_diff)
+```
+
+## All of these can be obtained \url{https://github.com/rakheon/SparseCovReg}.
