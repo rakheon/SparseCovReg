@@ -1,18 +1,7 @@
-JASA Reproducibility Materials Template
+SparseCovReg Analysis
 ================
 
-This GitHub repository contains a suggested template structure for authors who
-submit to JASA (either Applications and Case Studies or Theory and
-Methods) to include materials to reproduce analyses, visualizations, and
-tables.
-
-We provide this template as a default structure that we (the JASA Associate Editors of Reproducibility) think could be
-useful for many projects, either as is or with modifications by authors.
-However, the template is intended to be helpful and is by no means
-required of authors. Authors should consult [our reproducibility
-guide](https://jasa-acs.github.io/repro-guide) for details on what is
-required of reproducibility materials submitted with JASA revisions (not
-required upon initial submission).
+This GitHub repository contains the codes for reproducing the analysis in ''High-dimensional covariance regression with application to co-expression QTL detection''.
 
 ## Why is a template repository useful?
 
