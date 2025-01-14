@@ -211,7 +211,7 @@ for (ii in 1:num_simu){
 }
 
 ########## Save results when q=1 (adjust the file name below for different q) ############
-#save.image(file=paste0(path,"data/supp_q1.RData"))
+#save.image(file=paste0(path,"data/supp/supp_q1.RData"))
 
 
 ########## Numbers for Table S1 ############

@@ -19,7 +19,7 @@ path="/Users/rakheon_kim/Desktop/Research/SparseCovReg/"
 ## Numbers for tables: MA(1) model under Setting 1 with n=200, p=50, q=30
 Numbers for other settings can be obtained by loading the R data for each setting.
 ```{r}
-load(file=paste0(path,"data/fit/fit_n200p50q30_MA_set1.RData"))
+load(file=paste0(path,"data/main/fit_n200p50q30_MA_set1.RData"))
 # Table 1
 mean(S_diff); mean(ST_diff); mean(covreg_diff); mean(lse_diff); mean(covlpd_diff)
 sd(S_diff); sd(ST_diff); sd(covreg_diff); sd(lse_diff); sd(covlpd_diff)
@@ -32,7 +32,7 @@ colMeans(tb_COV)
 
 ## Figure 1
 ```{r}
-load(file=paste0(path,"data/fit/fit_n500p50q30_MA_set1.RData"))
+load(file=paste0(path,"data/main/fit_n500p50q30_MA_set1.RData"))
 # Code for creating the picture can be found in simul.R
 ```
 
@@ -74,7 +74,7 @@ axis(1, at = c(0.0, 0.1, 0.2, 0.3, 0.4, 0.5), labels = NA)
 
 ## Figure 2
 ```{r}
-load(file=paste0(path,"data/fit/fit_n500p50q100_MA_set2.RData"))
+load(file=paste0(path,"data/main/fit_n500p50q100_MA_set2.RData"))
 # Code for creating the picture can be found in simul.R
 ```
 

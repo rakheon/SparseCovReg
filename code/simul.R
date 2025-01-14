@@ -15,17 +15,17 @@ source(paste0(path,"code/functions/covreg_em.r"))
 
 ################# load cross-validation result #################
 # MA(1) model under Setting 1 when n=200, q=30 (adjust n and q below) 
-load(file=paste0(path,"data/cv/CVresult_n200p50q30_MA_set1.RData"))
+load(file=paste0(path,"data/main/CVresult_n200p50q30_MA_set1.RData"))
 # MA(1) model under Setting 2 when n=200, q=30 (adjust n and q below) 
-#load(file=paste0(path,"data/cv/CVresult_n200p50q30_MA_set2.RData"))
+#load(file=paste0(path,"data/main/CVresult_n200p50q30_MA_set2.RData"))
 # Clique model under Setting 1 when n=200, q=30 (adjust n and q below) 
-#load(file=paste0(path,"data/cv/CVresult_n200p50q30_BD_set1.RData"))
+#load(file=paste0(path,"data/main/CVresult_n200p50q30_BD_set1.RData"))
 # Clique model under Setting 2 when n=200, q=30 (adjust n and q below) 
-#load(file=paste0(path,"data/cv/CVresult_n200p50q30_BD_set2.RData"))
+#load(file=paste0(path,"data/main/CVresult_n200p50q30_BD_set2.RData"))
 # Hub model under Setting 1 when n=200, q=30 (adjust n and q below) 
-#load(file=paste0(path,"data/cv/CVresult_n200p50q30_HB_set1.RData"))
+#load(file=paste0(path,"data/main/CVresult_n200p50q30_HB_set1.RData"))
 # Hub model under Setting 2 when n=200, q=30 (adjust n and q below) 
-#load(file=paste0(path,"data/cv/CVresult_n200p50q30_HB_set2.RData"))
+#load(file=paste0(path,"data/main/CVresult_n200p50q30_HB_set2.RData"))
 
 # Basic Setting for n=200 and q=30 (For different n and q, adjust them below)
 num_simu = 100
@@ -289,17 +289,17 @@ rm(list=c("AA","AB","BA","BB","D","Dp","covl_res","covreg_res","eigres","Emat","
 
 ################# save model fit result #################
 # MA(1) model under Setting 1 when n=200, q=30 (adjust the file name below for different n and q) 
-save.image(file=paste0(path,"data/fit/fit_n200p50q30_MA_set1.RData"))
+save.image(file=paste0(path,"data/main/fit_n200p50q30_MA_set1.RData"))
 # MA(1) model under Setting 2 when n=200, q=30 (adjust the file name below for different n and q) 
-#save.image(file=paste0(path,"data/fit/fit_n200p50q30_MA_set2.RData"))
+#save.image(file=paste0(path,"data/main/fit_n200p50q30_MA_set2.RData"))
 # Clique model under Setting 1 when n=200, q=30 (adjust the file name below for different n and q) 
-#save.image(file=paste0(path,"data/fit/fit_n200p50q30_BD_set1.RData"))
+#save.image(file=paste0(path,"data/main/fit_n200p50q30_BD_set1.RData"))
 # Clique model under Setting 2 when n=200, q=30 (adjust the file name below for different n and q) 
-#save.image(file=paste0(path,"data/fit/fit_n200p50q30_BD_set2.RData"))
+#save.image(file=paste0(path,"data/main/fit_n200p50q30_BD_set2.RData"))
 # Hub model under Setting 1 when n=200, q=30 (adjust the file name below for different n and q) 
-#save.image(file=paste0(path,"data/fit/fit_n200p50q30_HB_set1.RData"))
+#save.image(file=paste0(path,"data/main/fit_n200p50q30_HB_set1.RData"))
 # Hub model under Setting 2 when n=200, q=30 (adjust the file name below for different n and q) 
-#save.image(file=paste0(path,"data/fit/fit_n200p50q30_HB_set2.RData"))
+#save.image(file=paste0(path,"data/main/fit_n200p50q30_HB_set2.RData"))
 
 ########## Numbers for Tables ############
 #Table 1
