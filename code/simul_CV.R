@@ -23,13 +23,7 @@ S_diff = numeric(num_simu); ST_diff = S_diff; lse_diff = S_diff; covl_diff = S_d
 covl_err_est = S_diff; covl_err_pred = S_diff
 lasso_TPR = numeric(num_simu); lasso_FPR = numeric(num_simu)
 coef_evalmin = matrix(NA, nrow=num_simu, ncol=q+1)
-Sigma_diag = matrix(NA, nrow = q+1, ncol = p); Sigma_off = matrix(NA, nrow = q+1, ncol = p*(p-1)/2)
-D <- duplication.matrix(p)
-Dp = solve(t(D)%*%D)%*%t(D)
 diag_id = (vech(diag(p))==1)
-tb_COV = matrix(NA, nrow = num_simu, ncol = 6)
-Sigma_12_mat = matrix(NA, nrow=num_simu, ncol = n)
-S_12_mat = Sigma_12_mat; covreg_12_mat = Sigma_12_mat; lse_12_mat = Sigma_12_mat; covl_12_mat = Sigma_12_mat
 
 # Covariance Model Setting: 1-MA(1), 2-Clique, 3-Hub
 set_model = 1
@@ -42,10 +36,6 @@ if (set_model == 1){
 } else{
   Sigma_array[,,2] = sigHB(p)-Sigma_array[,,1]
 }
-AA = 2*Dp%*%kronecker(Sigma_array[,,1], Sigma_array[,,1])%*%t(Dp)
-AB = 2*Dp%*%kronecker(Sigma_array[,,1], Sigma_array[,,2])%*%t(Dp)
-BA = 2*Dp%*%kronecker(Sigma_array[,,2], Sigma_array[,,1])%*%t(Dp)
-BB = 2*Dp%*%kronecker(Sigma_array[,,2], Sigma_array[,,2])%*%t(Dp)
 
 # Covariate Setting: 1-continuous covariates, 2-binary covariates
 set_covariate = 1
@@ -179,13 +169,6 @@ for (ii in 1:num_simu){
     }
   }
   
-  ################ Data for Figure 1 ######################
-  Sigma_12_mat[ii,] = Sigma_indiv[1,2,]
-  S_12_mat[ii,] = S_indiv[1,2,]
-  covreg_12_mat[ii,] = covreg_indiv[1,2,]
-  lse_12_mat[ii,] = lse_indiv[1,2,]
-  covl_12_mat[ii,] = covl_indiv[1,2,]
-  
   ####################### summary #######################
   lasso_TPR[ii] = sum(covl_coef*Sigma_array!=0)/sum(Sigma_array!=0)
   lasso_FPR[ii] = sum((covl_coef!=0)*(Sigma_array==0))/sum(Sigma_array==0)
@@ -197,92 +180,20 @@ for (ii in 1:num_simu){
   covl_diff[ii] = mean(sqrt(apply((covl_indiv-Sigma_indiv)^2, 3, sum))) 
   covlpd_diff[ii] = mean(sqrt(apply((covlpd_indiv-Sigma_indiv)^2, 3, sum)))   
   
-  ####################### inference #######################
-  for (k in 1:(q+1)){
-    for (j in 1:p){
-      Sigma_diag[k,j]=Sigma_array[j,j,k]
-    }
-  }
-  tempind = 0
-  for (i in 1:(p-1)){
-    for (j in (i+1):p){
-      tempind = tempind+1
-      Sigma_off[,tempind]=Sigma_array[i,j,]
-    }
-  }
-  XZns = cbind(matrix(1,nrow=n,ncol=1), z)
-  M = matrix(NA, nrow = q+1, ncol = q+1)
-  for (jj in 1:(q+1)){
-    xm_max = n^(1/2)+1; max_try = 10
-    while (xm_max > n^(1/2)){
-      M[jj,] = debiasingMatrix(t(XZns)%*%XZns/n, FALSE, n, jj, bound = 2*sqrt(log((q+1)*p*(p+1)/2)/n), linesearch = T, max_try = max_try)
-      xm_max = max(abs(XZns%*%M[jj,]))
-      max_try = max_try-1
-    }
-  }
-  covl_betaU = covl_beta + (1/n)*M%*%crossprod(XZns, Ymat - XZns%*%covl_beta)
-  covl_beta0U = covl_beta0 + (1/n)*M%*%crossprod(XZns, Ymat_diag - XZns%*%covl_beta0)
-  covl_betaU_975 = covl_betaU*0; covl_betaU_025 = covl_betaU*0
-  covl_beta0U_975 = covl_beta0U*0; covl_beta0U_025 = covl_beta0U*0
-  Ahalf = M%*%t(XZns)
-  Emat = Ymat - XZns%*%covl_betaU
-  Emat_diag = Ymat_diag - XZns%*%covl_beta0U
-  coef_err = Ahalf%*%Emat/n
-  coef_err_diag = Ahalf%*%Emat_diag/n
-  coef_var = covl_betaU*0
-  for (iii in 1:dim(covl_betaU)[2]){
-    for (jjj in 1:(q+1)){
-      for (kkk in 1:n){
-        coef_var[jjj,iii] = coef_var[jjj,iii] +  (Ahalf[jjj,kkk]*Emat[kkk,iii] - coef_err[jjj,iii])^2
-      }
-    }
-  }
-  coef_var = coef_var/n
-  moe = 1.96/sqrt(n)*sqrt(coef_var)
-  covl_betaU_975 = covl_betaU + moe
-  covl_betaU_025 = covl_betaU - moe
-  coef_var_diag = covl_beta0U*0
-  for (iii in 1:dim(covl_beta0U)[2]){
-    for (jjj in 1:(q+1)){
-      for (kkk in 1:n){
-        coef_var_diag[jjj,iii] = coef_var_diag[jjj,iii] +  (Ahalf[jjj,kkk]*Emat_diag[kkk,iii] - coef_err_diag[jjj,iii])^2
-      }
-    }
-  }
-  coef_var_diag = coef_var_diag/n
-  moe = 1.96/sqrt(n)*sqrt(coef_var_diag)
-  covl_beta0U_975 = covl_beta0U + moe
-  covl_beta0U_025 = covl_beta0U - moe
-  
-  Vmat = matrix(NA, nrow = n, ncol = p*(p-1)/2)
-  for (kk in 1:n){
-    Vmat[kk,] = diag(AA+z[kk,1]*AB+z[kk,1]*BA+z[kk,1]^2*BB)[!diag_id]
-  }
-  MX2 = (M%*%t(XZns))^2
-  moe = 1.96/n*sqrt(MX2%*%Vmat)
-  true_betaU_975 = covl_betaU + moe
-  true_betaU_025 = covl_betaU - moe
-  
-  tb_COV[ii,] = c(sum((covl_betaU_975>=Sigma_off)*(covl_betaU_025<=Sigma_off))/(prod(dim(Sigma_off))),  # total coverage
-                  sum(((covl_betaU_975>=Sigma_off)*(covl_betaU_025<=Sigma_off))*(Sigma_off!=0))/sum(Sigma_off!=0),  # active coverage
-                  sum(((covl_betaU_975>=Sigma_off)*(covl_betaU_025<=Sigma_off))*(Sigma_off==0))/sum(Sigma_off==0),
-                  sum((true_betaU_975>=Sigma_off)*(true_betaU_025<=Sigma_off))/(prod(dim(Sigma_off))),  # total coverage
-                  sum(((true_betaU_975>=Sigma_off)*(true_betaU_025<=Sigma_off))*(Sigma_off!=0))/sum(Sigma_off!=0),  # active coverage
-                  sum(((true_betaU_975>=Sigma_off)*(true_betaU_025<=Sigma_off))*(Sigma_off==0))/sum(Sigma_off==0))
-  
 }
-rm(list=c("AA","AB","BA","BB","D","Dp","covl_res","covreg_res","eigres","Emat","soft_cv","Vmat","Ymat","covl_indiv","covlpd_indiv","covreg_indiv","lse_indiv","S_indiv","Sigma_indiv","ST_indiv"))
+rm(list = setdiff(ls(), c("covl_lambmin", "covl_almin")))
 
-################# save model fit result #################
+
+################# save selected tuning parameters #################
 # MA(1) model under Setting 1 when n=200, q=30 (adjust n and q below) 
-save.image(file=paste0(path,"data/fit_n200p50q30_MA_set1_test.RData"))
+#save.image(file=paste0(path,"data/main/CVresult_n200p50q30_MA_set1.RData"))
 # MA(1) model under Setting 2 when n=200, q=30 (adjust n and q below) 
-#save.image(file=paste0(path,"data/fit_n200p50q30_MA_set2_test.RData"))
+#save.image(file=paste0(path,"data/main/CVresult_n200p50q30_MA_set2.RData"))
 # Clique model under Setting 1 when n=200, q=30 (adjust n and q below)
-#save.image(file=paste0(path,"data/fit_n200p50q30_BD_set1_test.RData"))
+#save.image(file=paste0(path,"data/main/CVresult_n200p50q30_BD_set1.RData"))
 # Clique model under Setting 2 when n=200, q=30 (adjust n and q below)
-#save.image(file=paste0(path,"data/fit_n200p50q30_BD_set2_test.RData"))
+#save.image(file=paste0(path,"data/main/CVresult_n200p50q30_BD_set2.RData"))
 # Hub model under Setting 1 when n=200, q=30 (adjust n and q below)
-#save.image(file=paste0(path,"data/fit_n200p50q30_HB_set1_test.RData"))
+#save.image(file=paste0(path,"data/main/CVresult_n200p50q30_HB_set1.RData"))
 # Hub model under Setting 2 when n=200, q=30 (adjust n and q below)
-#save.image(file=paste0(path,"data/fit_n200p50q30_HB_set2_test.RData"))
+#save.image(file=paste0(path,"data/main/CVresult_n200p50q30_HB_set2.RData"))
