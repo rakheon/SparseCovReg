@@ -5,7 +5,7 @@ This GitHub repository contains the codes for reproducing the analysis in ''High
 
 ## code
 
-This folder contains the codes for reproducing the analysis in Sections 4, 5 and the supplementary material of the paper (simulation studies and real data studies).
+This folder contains the codes for reproducing the analysis in Sections 5, 6 and the supplementary material of the paper (simulation studies and real data studies).
 
 1.  simul.R: All results of simulation in the main manuscript (Section 5) can be reproduced by this file.
 2.  simul_supp.R: All results of simulation in the supplementary materials (Section S9) can be reproduced by this file.
