@@ -30,7 +30,7 @@ colMeans(tb_COV)
 ```
 
 
-## Figure 1
+## Figure 1 (Section 5)
 ```{r}
 load(file=paste0(path,"data/main/fit_n500p50q30_MA_set1.RData"))
 # Code for creating the picture can be found in simul.R
@@ -72,7 +72,7 @@ axis(1, at = c(0.0, 0.1, 0.2, 0.3, 0.4, 0.5), labels = NA)
 ```
 
 
-## Figure 2
+## Figure 2 (Section 5)
 ```{r}
 load(file=paste0(path,"data/main/fit_n500p50q100_MA_set2.RData"))
 # Code for creating the picture can be found in simul.R
@@ -91,8 +91,190 @@ gfg4 = gfg[c(nzid, zid),]; gfg4$x=1:97
 ggplot(gfg4, aes(x, w, y)) + geom_point(shape=1) + geom_point(aes(x,y)) + geom_errorbar(aes(ymin = low, ymax = up)) + scale_y_continuous(breaks=c(-1.5,-1,-0.5,0,0.5,1,1.5)) + theme_bw() + theme(axis.title = element_blank(),axis.text = element_text(size=10),panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.background = element_blank(),legend.position="none")
 ```
 
+## Figure 3 (Section 6)
+```{r}
+load(file=paste0(path,"data/main/gbmdata_run.RData"))
+library(reshape2)
+# Code for creating the picture can be found in data_analysis.R
+```
 
-## Figure S2
+```{r, fig.width=3.3, fig.height=3.3, echo=FALSE}
+par(mfrow=c(1,2), mar = c(2, 1, 2, 1))
+idsel=c( 64:66,58,61,62,57,72, 59,56,55, 25:27,15,13,17,22,16,20,21,23,24,12,14,18,19,48,49,50,45,46,47, 51:53,54,8,9,28,29,30,31,1, 40,44,43,42,41,36,37,39, 35,38,34,33,32,3,67,68,69,11,10,2,71,6,7,4,5, 73,70,63,60)
+# left panel
+Rn= ST[idsel,idsel]
+rownames(Rn)=colnames(dat[,idsel]); colnames(Rn)=rev(colnames(dat[,idsel])); melted_R <- melt(Rn, na.rm = TRUE)
+ggplot(data = melted_R, aes(Var1, rev(Var2), fill = value))+geom_tile(color = "white")+
+  scale_fill_gradient2(low = "#0072B2", high = "#D55E00", mid = "white", midpoint = 0, limit = c(-0.7,0.7), space = "Lab", name="Pearson\nCorrelation") +
+  theme_minimal()+scale_x_discrete(position = "top") +
+  theme(axis.title = element_blank(),
+        axis.text.y = element_text(size=6),
+        axis.text.x = element_text(size=6, angle=90,hjust=0),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        #panel.border = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA),
+        panel.background = element_blank(),
+        legend.position="none") + coord_fixed()
+# right panel
+Rn= covl_coef[idsel,idsel,1]
+rownames(Rn)=colnames(dat[,idsel]); colnames(Rn)=rev(colnames(dat[,idsel])); melted_R <- melt(Rn, na.rm = TRUE)
+ggplot(data = melted_R, aes(Var1, rev(Var2), fill = value))+geom_tile(color = "white")+
+  scale_fill_gradient2(low = "#0072B2", high = "#D55E00", mid = "white", midpoint = 0, limit = c(-0.7,0.7), space = "Lab", name="Pearson\nCorrelation") +
+  theme_minimal()+scale_x_discrete(position = "top") +
+  theme(axis.title = element_blank(),
+        axis.text.y = element_text(size=6),
+        axis.text.x = element_text(size=6, angle=90,hjust=0),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        #panel.border = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA),
+        panel.background = element_blank(),
+        legend.position="none") + coord_fixed()
+```
+
+## Figure 4 (Section 6)
+```{r}
+# Code for creating the picture can be found in data_analysis.R
+```
+
+```{r, fig.width=3.3, fig.height=3.3, echo=FALSE}
+# left panel
+Rn= covl_coef[idsel,idsel,18]+diag(p)
+rownames(Rn)=colnames(dat[,idsel]); colnames(Rn)=rev(colnames(dat[,idsel])); melted_R <- melt(Rn, na.rm = TRUE)
+ggplot(data = melted_R, aes(Var1, rev(Var2), fill = value))+geom_tile(color = "white")+
+  scale_fill_gradient2(low = "#0072B2", high = "#D55E00", mid = "white", midpoint = 0, limit = c(-0.7,0.7), space = "Lab", name="Pearson\nCorrelation") +
+  theme_minimal()+scale_x_discrete(position = "top") +
+  theme(axis.title = element_blank(),
+        axis.text.y = element_text(size=6),
+        axis.text.x = element_text(size=6, angle=90,hjust=0),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        #panel.border = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA),
+        panel.background = element_blank(),
+        legend.position="none") + coord_fixed()
+# right panel
+Rn= covl_coef[idsel,idsel,3]+diag(p)
+rownames(Rn)=colnames(dat[,idsel]); colnames(Rn)=rev(colnames(dat[,idsel])); melted_R <- melt(Rn, na.rm = TRUE)
+ggplot(data = melted_R, aes(Var1, rev(Var2), fill = value))+geom_tile(color = "white")+
+  scale_fill_gradient2(low = "#0072B2", high = "#D55E00", mid = "white", midpoint = 0, limit = c(-0.7,0.7), space = "Lab", name="Pearson\nCorrelation") +
+  theme_minimal()+scale_x_discrete(position = "top") +
+  theme(axis.title = element_blank(),
+        axis.text.y = element_text(size=6),
+        axis.text.x = element_text(size=6, angle=90,hjust=0),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        #panel.border = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA),
+        panel.background = element_blank(),
+        legend.position="none") + coord_fixed()
+```
+
+## Figure 5 (Section 6)
+```{r}
+library(network)
+# Code for creating the picture can be found in data_analysis.R
+```
+
+```{r, fig.width=3.3, fig.height=3.3, echo=FALSE}
+#par(mfrow=c(1,2))
+# left panel
+mat = covl_coef[,,18]*nz_coef[,,18]
+colnames(mat) = colnames(dat); rownames(mat) = colnames(dat)
+matcol = (mat<0)*4 + (mat>0)*2
+nn = as.network(mat, directed = FALSE)#, vertex.attr = mat)
+set.seed(6)  # for XZ[,18]
+lp = list(niter=NULL, max.delta=NULL, area=NULL, cool.exp=NULL, repulse.rad=NULL,
+          init=NULL, groups=NULL, rotation=NULL, layout.control=0.5, constraints=NULL,
+          round = TRUE, digits = 10)
+lc = network.layout.fruchtermanreingold(nn, layout.par=lp)
+par(mar = c(1, 1, 1, 1))
+plot.network(nn, label = network.vertex.names(nn), coord = lc, label.cex = 0.6, vertex.cex = 0.5, edge.col = matcol, edge.lwd = abs(mat)*10)
+# right panel
+mat = covl_coef[,,3]*nz_coef[,,3]
+colnames(mat) = colnames(dat); rownames(mat) = colnames(dat)
+matcol = (mat<0)*4 + (mat>0)*2
+nn = as.network(mat, directed = FALSE)#, vertex.attr = mat)
+set.seed(17)  # for XZ[,3]
+lp = list(niter=NULL, max.delta=NULL, area=NULL, cool.exp=NULL, repulse.rad=NULL,
+          init=NULL, groups=NULL, rotation=NULL, layout.control=0.5, constraints=NULL,
+          round = TRUE, digits = 10)
+lc = network.layout.fruchtermanreingold(nn, layout.par=lp)
+par(mar = c(1, 1, 1, 1))
+plot.network(nn, label = network.vertex.names(nn), coord = lc, label.cex = 0.6, vertex.cex = 0.5, edge.col = matcol, edge.lwd = abs(mat)*10)
+```
+
+
+## Figure S1 (Section S8)
+```{r}
+# Code for creating the picture can be found in data_analysis.R
+```
+
+```{r, fig.width=3.3, fig.height=3.3, echo=FALSE}
+# top left panel
+Rn= covl_coef[idsel,idsel,94]+diag(p)
+rownames(Rn)=colnames(dat[,idsel]); colnames(Rn)=rev(colnames(dat[,idsel])); melted_R <- melt(Rn, na.rm = TRUE)
+ggplot(data = melted_R, aes(Var1, rev(Var2), fill = value))+geom_tile(color = "white")+
+  scale_fill_gradient2(low = "#0072B2", high = "#D55E00", mid = "white", midpoint = 0, limit = c(-0.4,0.4), space = "Lab", name="Pearson\nCorrelation") +
+  theme_minimal()+scale_x_discrete(position = "top") +
+  theme(axis.title = element_blank(),
+        axis.text.y = element_text(size=6),
+        axis.text.x = element_text(size=6, angle=90,hjust=0),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        #panel.border = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA),
+        panel.background = element_blank(),
+        legend.position="none") + coord_fixed()
+# top right panel
+Rn= covl_coef[idsel,idsel,33]+diag(p)
+rownames(Rn)=colnames(dat[,idsel]); colnames(Rn)=rev(colnames(dat[,idsel])); melted_R <- melt(Rn, na.rm = TRUE)
+ggplot(data = melted_R, aes(Var1, rev(Var2), fill = value))+geom_tile(color = "white")+
+  scale_fill_gradient2(low = "#0072B2", high = "#D55E00", mid = "white", midpoint = 0, limit = c(-0.4,0.4), space = "Lab", name="Pearson\nCorrelation") +
+  theme_minimal()+scale_x_discrete(position = "top") +
+  theme(axis.title = element_blank(),
+        axis.text.y = element_text(size=6),
+        axis.text.x = element_text(size=6, angle=90,hjust=0),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        #panel.border = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA),
+        panel.background = element_blank(),
+        legend.position="none") + coord_fixed()
+# bottom left panel
+Rn= covl_coef[idsel,idsel,28]+diag(p)
+rownames(Rn)=colnames(dat[,idsel]); colnames(Rn)=rev(colnames(dat[,idsel])); melted_R <- melt(Rn, na.rm = TRUE)
+ggplot(data = melted_R, aes(Var1, rev(Var2), fill = value))+geom_tile(color = "white")+
+  scale_fill_gradient2(low = "#0072B2", high = "#D55E00", mid = "white", midpoint = 0, limit = c(-0.1,0.1), space = "Lab", name="Pearson\nCorrelation") +
+  theme_minimal()+scale_x_discrete(position = "top") +
+  theme(axis.title = element_blank(),
+        axis.text.y = element_text(size=6),
+        axis.text.x = element_text(size=6, angle=90,hjust=0),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        #panel.border = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA),
+        panel.background = element_blank(),
+        legend.position="none") + coord_fixed()
+# bottom right panel
+Rn= covl_coef[idsel,idsel,63]+diag(p)
+rownames(Rn)=colnames(dat[,idsel]); colnames(Rn)=rev(colnames(dat[,idsel])); melted_R <- melt(Rn, na.rm = TRUE)
+ggplot(data = melted_R, aes(Var1, rev(Var2), fill = value))+geom_tile(color = "white")+
+  scale_fill_gradient2(low = "#0072B2", high = "#D55E00", mid = "white", midpoint = 0, limit = c(-0.1,0.1), space = "Lab", name="Pearson\nCorrelation") +
+  theme_minimal()+scale_x_discrete(position = "top") +
+  theme(axis.title = element_blank(),
+        axis.text.y = element_text(size=6),
+        axis.text.x = element_text(size=6, angle=90,hjust=0),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        #panel.border = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA),
+        panel.background = element_blank(),
+        legend.position="none") + coord_fixed()
+```
+
+## Figure S2 (Section S9)
 ```{r}
 library(mvtnorm)
 n=200; p=2; q=3; ii=1
@@ -115,7 +297,7 @@ plot(z[,2], Sigma_indiv[1,2,], col="white", pch=16, ylim=c(-6,2), xlab=NA, ylab=
 points(z[,2], (dat[,1]-mean(dat[,1]))*(dat[,2]-mean(dat[,2])), cex=0.5, pch=16)
 ```
 
-## Numbers for Supplement S9 (when q=1)
+## Numbers for tables in Section S9 (when q=1)
 Numbers for other settings can be obtained by loading the R data for each setting.
 ```{r}
 load(file=paste0(path,"data/supp/supp_q1.RData"))
