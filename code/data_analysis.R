@@ -12,12 +12,32 @@ library(FinCovRegularization)
 library(selectiveInference)
 library(glmnet)
 library(network)
+library(dplyr)
+library(mice)
 source(paste0(path,"code/functions/spcovreg_basic.R")) 
 source(paste0(path,"code/functions/spcovreg.R"))
 source(paste0(path,"code/functions/covreg_em.r")) 
 
-load(file=paste0(path,"data/main/gbmdata.RData"))
-dat = genedat; z = covdat
+load(file=paste0(path,"data/GBMdata/expData_73.RData"))
+load(file=paste0(path,"data/GBMdata/SNPdata4.RData"))
+load(file=paste0(path,"data/GBMdata/SNPname.RData"))
+load(file=paste0(path,"data/GBMdata/final_id.RData"))
+expNames = read.csv2(paste0(path,"data/GBMdata/gene names.csv"), header = F, sep = ",")
+expNames = expNames[-c(13,14),]
+cliData = read.csv2(paste0(path,"data/GBMdata/clinical.data.csv"), header = T, sep = ",")
+colMeans(expData)
+colMeans(SNPdata)
+final_id_df = as.data.frame(final_id)
+demo_df = data.frame("final_id"=cliData$SUBJECT_ID, "dtype"=cliData$DISEASE_TYPE, "age"=cliData$AGE_RANGE, "gender"=cliData$GENDER)
+demodat = inner_join(final_id_df, demo_df, by="final_id")
+demodat$final_id==final_id
+agetemp = as.numeric(substr(demodat$age,1,2))
+gentemp = (demodat$gender=="MALE")*0+(demodat$gender=="FEMALE")*1; gentemp[(demodat$gender=="")|(demodat$gender==" ")]=NA
+dat = expData; colnames(dat)=expNames[,1]; z = SNPdata; z[z==2]=1; colnames(z)=names; z=cbind(z, "age"=agetemp, "gender"=gentemp)
+zz=cbind(z[,c(-119,-120)], "age"=as.factor(agetemp), "gender"=as.factor(gentemp))
+z_impute = mice(zz, m=1, seed = 1)
+z[,119][is.na(agetemp)]=(z_impute$imp$age[,1]*5+10); z[,120][is.na(gentemp)]=(z_impute$imp$gender[,1]-1)
+dat=dat[demodat$dtype=="GBM",]; z=z[demodat$dtype=="GBM",]
 
 set.seed(1)
 meancv = cv.glmnet(x=z,y=dat,family = "mgaussian")
