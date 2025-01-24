@@ -18,5 +18,6 @@ This folder contains all the utilized data and output from both simulation and r
 
 1.  main: All the utilized data and output of simulation (Section 5) and real data analysis (Section 6) in the main manuscript are included in this folder.
 2.  supp: All the utilized data and output of simulation in the supplementary materials (Section S9) are included in this folder.
+3.  GBMdata: Raw data files for 178 patients with glioblastoma multiforme (GBM) from the REMBRANDT study (GSE108476)
 
 
