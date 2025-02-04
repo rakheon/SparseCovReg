@@ -1,4 +1,5 @@
 # The functions for implementing Hoff and Niu (2012).
+# Source: http://www2.stat.duke.edu/~pdh10/Code/hoff_niu_2012_ss/covreg_em.r
 ldmvnorm<-function(y,mu=rep(0,length(y)),Sig=diag(1,length(y)))
 {
   -.5*( length(y)*log(2*pi) + log(det(Sig)) + t(y-mu)%*%solve(Sig)%*%(y-mu)  )
