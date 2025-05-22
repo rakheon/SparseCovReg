@@ -13,7 +13,7 @@ soft <- function(a, lambda){
 #  @p: the dimension of the square matrix
 # OUTPUT: the p by p matrix where off-diagonals are equal to the elements of vec
 intomat = function(vec, p){
-  A = matrix(0, p, p)
+  A = matrix(0, p, p)          # the p by p matrix to be created
   ij = 0
   for (i in 1:(p-1)){
     for (j in (i+1):p){
@@ -36,8 +36,8 @@ intomat = function(vec, p){
 # OUTPUT: the generated true covariance matrix
 sigBD = function(p, diag0, a, b, k, hetero=NULL){
     # a and b are the limits of the uniform distribution and k is the block size
-    A = diag(rep(diag0, p))
-    m = p / k
+    A = diag(rep(diag0, p))        # covariance matrix to be created
+    m = p / k                      # number of blocks 
     for (h in 1 : m){
         for (i in ((h - 1) * k + 1) : (h * k)){
             for (j in ((h - 1) * k + 1) : (h * k)){
@@ -49,6 +49,7 @@ sigBD = function(p, diag0, a, b, k, hetero=NULL){
             }
         }
     }
+    ### adjust the correlation matrix for heterogeneous covariance matrix
     if (!is.null(hetero)){
         D = runif(p, 0.1, 10)
         #D = runif(p, 2, 5000)
@@ -66,7 +67,7 @@ sigBD = function(p, diag0, a, b, k, hetero=NULL){
 # OUTPUT: the generated true covariance matrix
 sigMA = function(p, diag0=1, offdiag, hetero=NULL){
     # a and b are the limits of the uniform distribution and k is the block size
-    A = diag(rep(diag0, p))
+    A = diag(rep(diag0, p))               # covariance matrix to be created
     for (i in 1:p){
         for (j in 1:p){
             for (k in 1:length(offdiag)){
@@ -75,6 +76,7 @@ sigMA = function(p, diag0=1, offdiag, hetero=NULL){
             #if (abs(i-j)==1){A[i,j] <- a}
         }
     }
+    ### adjust the correlation matrix for heterogeneous covariance matrix
     if (!is.null(hetero)){
         D = runif(p, 0.1, 10)
         A = diag(D) %*% A %*% diag(D)
@@ -85,9 +87,9 @@ sigMA = function(p, diag0=1, offdiag, hetero=NULL){
 # true covariance matrix generator for the Hub model
 # INPUT:
 #  @p: the dimension of the covariance matrix
-# OUTPUT: the generated true covariance matrix as described in Kim and Zhang (2025?)
+# OUTPUT: the generated true covariance matrix as described in Kim and Zhang (2025)
 sigHB = function(p){
-  Sigma <- matrix(0, nrow = p, ncol = p)
+  Sigma <- matrix(0, nrow = p, ncol = p)                       # covariance matrix to be created
   Sigma[1, 1:(p / 10)] <- sign(rnorm(n = p / 10))
   Sigma[(p / 10 + 1), (p / 10 + 1):(2 * p / 10)] <- sign(rnorm(n = p / 10))
   Sigma[(2 * p / 10 + 1), (2 * p / 10 + 1):(3 * p / 10)] <- sign(rnorm(n = p / 10))

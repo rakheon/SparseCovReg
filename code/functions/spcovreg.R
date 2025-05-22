@@ -30,49 +30,47 @@ covlasso <- function(Xtilde, Ytilde0, Ytilde, beta0, beta, lambda1, lambda2){
 spcovreg <- function(Xtilde, Ytilde0, Ytilde, lambda1, lambda2, beta_start = NULL, beta0_start = NULL, eps = 0.0001){
 
   # set dimension 
-  n <- dim(Xtilde)[1]
-  p <- dim(Xtilde)[2]
-  q <- dim(Ytilde)[2]
-  d <- dim(Ytilde0)[2]
+  n <- dim(Xtilde)[1]     # Number of observations  
+  p <- dim(Xtilde)[2]     # Number of covariates 
+  q <- dim(Ytilde)[2]     # Number of pairs (i.e. cross-products) of response variables
+  d <- dim(Ytilde0)[2]    # Number of response variables
   
   if(is.null(beta_start)){
-    beta_start <- matrix(1, nrow=p, ncol=q)
-    beta0_start <- matrix(1, nrow=p, ncol=d)
-  } #else if (length(beta_start) != p){
-    #stop("Number of parameters should be compatible with the number of predictors")
-  #}
+    beta_start <- matrix(1, nrow=p, ncol=q)     # initial regression coefficients for the off-diagonals
+    beta0_start <- matrix(1, nrow=p, ncol=d)    # initial regression coefficients for the diagonals
+  }
   # Coordinate-descent implementation. Stop when the difference between objective functions is less than eps.
-  beta <- beta_start
-  beta0 <- beta0_start
+  beta <- beta_start                            # updated regression coefficients for the off-diagonals
+  beta0 <- beta0_start                          # updated regression coefficients for the diagonals
   # We will use FULL-residual approach
-  full_res0 <- Ytilde0 - (Xtilde %*% beta0)
-  full_res <- Ytilde - (Xtilde %*% beta)
-  iter <- 0; itermax <- 1000
-  diff <- 1
-  fmin_old <- covlasso(Xtilde, Ytilde0, Ytilde, beta0_start, beta_start, lambda1, lambda2)
-  fmin_vec = NULL
-  scaleconst = numeric(p)
+  full_res0 <- Ytilde0 - (Xtilde %*% beta0)     # current residuals for the diagonals
+  full_res <- Ytilde - (Xtilde %*% beta)        # current residuals for the off-diagonals
+  iter <- 0; itermax <- 1000                    # coordinate descent cycle iteration counter
+  diff <- 1                                     # change in objective function value (initially set to 1)
+  fmin_old <- covlasso(Xtilde, Ytilde0, Ytilde, beta0_start, beta_start, lambda1, lambda2)       # current objective function value
+  fmin_vec = NULL                               # for monitoring the objective function value
+  scaleconst = numeric(p)                       # vector of average squared covariate, X_i^2/n
   while(diff >= eps & iter <= itermax){
     iter <- iter + 1
-    beta0_old = beta0
-    beta_old = beta
-    beta0_temp = beta0
-    beta_temp = beta
-    # intercept: only L1 penalty
+    beta0_old = beta0                           # current regression coefficients for the diagonals
+    beta_old = beta                             # current regression coefficients for the off-diagonals
+    beta0_temp = beta0                          # temporary regression coefficients before penalization for the diagonals
+    beta_temp = beta                            # temporary regression coefficients before penalization for the off-diagonals
+    ### intercept: only L1 penalty
     beta0_temp[1,] = t(Xtilde[,1])%*%(full_res0+as.matrix(Xtilde[,1],ncol=1)%*%beta0[1,])/n
     beta_temp[1,] = t(Xtilde[,1])%*%(full_res+as.matrix(Xtilde[,1],ncol=1)%*%beta[1,])/n
     if (iter==1) scaleconst[1] = as.numeric(crossprod(Xtilde[,1])/n)
     normconst = as.numeric(1/(scaleconst[1] ))
-    beta[1,] <- normconst*soft(scaleconst[1]*beta[1,]+t(Xtilde[,1])%*%full_res/n, lambda2 )  # 1/(sum(Xtilde[,i]^2)/n + lambda1/sqrt(sum(beta0[i,]^2)+sum(beta[i,]^2)) )*soft(t(Xtilde[,i])%*%partresid/n, lambda2 ) 
-    beta0[1,] <- normconst*(scaleconst[1]*beta0[1,]+t(Xtilde[,1])%*%full_res0/n)  # 1/(sum(Xtilde[,i]^2)/n + lambda1/sqrt(sum(beta0[i,]^2)+sum(beta[i,]^2)) )*(t(Xtilde[,i])%*%partresid0/n)
+    beta[1,] <- normconst*soft(scaleconst[1]*beta[1,]+t(Xtilde[,1])%*%full_res/n, lambda2 ) 
+    beta0[1,] <- normconst*(scaleconst[1]*beta0[1,]+t(Xtilde[,1])%*%full_res0/n) 
     full_res <- full_res + as.matrix(Xtilde[,1],ncol=1)%*%(beta_old[1,]-beta[1,])
     full_res0 <- full_res0 + as.matrix(Xtilde[,1],ncol=1)%*%(beta0_old[1,]-beta0[1,])
-    # slope for each covariate: L2 + L1 penalty
+    ### slope for each covariate: L2 + L1 penalty
     for (i in 2:p){
       beta0_temp[i,] = t(Xtilde[,i])%*%(full_res0+as.matrix(Xtilde[,i],ncol=1)%*%beta0[i,])/n
       beta_temp[i,] = t(Xtilde[,i])%*%(full_res+as.matrix(Xtilde[,i],ncol=1)%*%beta[i,])/n
       if (iter==1) scaleconst[i] = as.numeric(crossprod(Xtilde[,i])/n)
-      cond = (sqrt(crossprod(soft(beta0_temp[i,], lambda2) )+crossprod(soft(beta_temp[i,], lambda2) )) < lambda1) # (sqrt(sum(beta0_temp[i,]^2)+sum(beta_temp[i,]^2)) < lambda1)
+      cond = (sqrt(crossprod(soft(beta0_temp[i,], lambda2) )+crossprod(soft(beta_temp[i,], lambda2) )) < lambda1)  # zero condition for the grop lasso penalty
       if (cond==TRUE){
         beta[i,] = beta[i,]*0
         beta0[i,] = beta0[i,]*0
@@ -80,15 +78,15 @@ spcovreg <- function(Xtilde, Ytilde0, Ytilde, lambda1, lambda2, beta_start = NUL
         full_res0 <- full_res0 + as.matrix(Xtilde[,i],ncol=1)%*%(beta0_old[i,]-beta0[i,])
       } else{
         normconst = as.numeric(1/(scaleconst[i] + lambda1/sqrt(crossprod(beta0[i,])+crossprod(beta[i,])) ))
-        beta[i,] <- normconst*soft(scaleconst[i]*beta[i,]+t(Xtilde[,i])%*%full_res/n, lambda2 )  # 1/(sum(Xtilde[,i]^2)/n + lambda1/sqrt(sum(beta0[i,]^2)+sum(beta[i,]^2)) )*soft(t(Xtilde[,i])%*%partresid/n, lambda2 ) 
-        beta0[i,] <- normconst*soft(scaleconst[i]*beta0[i,]+t(Xtilde[,i])%*%full_res0/n, lambda2 )  # 1/(sum(Xtilde[,i]^2)/n + lambda1/sqrt(sum(beta0[i,]^2)+sum(beta[i,]^2)) )*(t(Xtilde[,i])%*%partresid0/n)
+        beta[i,] <- normconst*soft(scaleconst[i]*beta[i,]+t(Xtilde[,i])%*%full_res/n, lambda2 )  
+        beta0[i,] <- normconst*soft(scaleconst[i]*beta0[i,]+t(Xtilde[,i])%*%full_res0/n, lambda2 )  
         full_res <- full_res + as.matrix(Xtilde[,i],ncol=1)%*%(beta_old[i,]-beta[i,])
         full_res0 <- full_res0 + as.matrix(Xtilde[,i],ncol=1)%*%(beta0_old[i,]-beta0[i,])
       }
     }
-    fmin <- covlasso(Xtilde, Ytilde0, Ytilde, beta0, beta, lambda1, lambda2)
+    fmin <- covlasso(Xtilde, Ytilde0, Ytilde, beta0, beta, lambda1, lambda2)        # updated objective function value
     fmin_vec <- c(fmin_vec , fmin)
-    diff <- fmin_old - fmin # mean(abs(beta0_temp - beta0)) # fmin_old - fmin
+    diff <- fmin_old - fmin 
     #print(fmin_old - fmin)
     fmin_old <- fmin
   }
@@ -114,17 +112,16 @@ cv.spcovreg <- function(X, Y0, Y, lambda_seq, alpha_seq, k = 5, cvseed=1234){
   
   set.seed(cvseed)
 
-  n <- dim(X)[1]
-  p <- dim(X)[2]
-  q <- dim(Y)[2]
-  d <- dim(Y0)[2]
+  n <- dim(X)[1]            # Number of observations  
+  p <- dim(X)[2]            # Number of covariates 
+  q <- dim(Y)[2]            # Number of pairs (i.e. cross-products) of response variables
+  d <- dim(Y0)[2]           # Number of response variables
   
-  idfold <- sample(1:n) %% k + 1
+  idfold <- sample(1:n) %% k + 1                     # fold identifier
   
-  n_lambda <- length(lambda_seq)
-  n_alpha <- length(alpha_seq)
-  sqerror <- array(NA, c(n, n_lambda, n_alpha))
-  cvfold <- array(NA, c(k, n_lambda, n_alpha))
+  n_lambda <- length(lambda_seq)                     # length of the sequence of lambda considered 
+  n_alpha <- length(alpha_seq)                       # length of the sequence of alpha considered 
+  cvfold <- array(NA, c(k, n_lambda, n_alpha))       # to store the cross validation test error for each folder, each lambda and each alpha
   for (fold in 1:k){
     print(c("fold: ", fold))
     # Training data
@@ -141,16 +138,15 @@ cv.spcovreg <- function(X, Y0, Y, lambda_seq, alpha_seq, k = 5, cvseed=1234){
       print(l)
       for (m in 1:n_alpha){
         cvfit <- spcovreg(Xtilde=xtrain, Ytilde0=y0train, Ytilde=as.matrix(ytrain), lambda1=(1-alpha_seq[m])*lambda_seq[l], lambda2 = alpha_seq[m]*lambda_seq[l], eps = 0.000001)
-        testfitted <- xtest %*% cvfit$beta
-        testfitted0 <- xtest %*% cvfit$beta0
-        cvfold[fold, l, m] <- mean(c(colMeans((ytest - testfitted)^2), colMeans((y0test - testfitted0)^2)))
-        sqerror[idfold == fold, l, m] <- rowSums((ytest - testfitted)^2)+rowSums((y0test - testfitted0)^2)
+        testfitted <- xtest %*% cvfit$beta                     # fitted value of the off-diagonals
+        testfitted0 <- xtest %*% cvfit$beta0                   # fitted value of the diagonals
+        cvfold[fold, l, m] <- mean(c(colMeans((ytest - testfitted)^2), colMeans((y0test - testfitted0)^2)))   # test error
       }
     }
     
   }
   # Calculate CV(lambda) and SE_CV(lambda) for each value of lambda
-  cvm <- apply(cvfold,c(2,3), mean) # apply(sqerror,c(2,3), mean) 
+  cvm <- apply(cvfold,c(2,3), mean)                    
   cvse <- apply(cvfold,c(2,3), sd)/sqrt(k)
   
   # Find lambda_min
@@ -161,6 +157,6 @@ cv.spcovreg <- function(X, Y0, Y, lambda_seq, alpha_seq, k = 5, cvseed=1234){
   lambda_min <- lambda_seq[lambda_tb[which.min(cvm),2]]
   alpha_min <- alpha_seq[lambda_tb[which.min(cvm),3]]
   
-  return(list(lambda_min = lambda_min, alpha_min = alpha_min, cvm = cvm, cvse = cvse)) #, cvfold = cvfold, sqerror = sqerror))
+  return(list(lambda_min = lambda_min, alpha_min = alpha_min, cvm = cvm, cvse = cvse)) 
 }
 
