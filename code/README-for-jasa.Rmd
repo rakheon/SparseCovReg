@@ -1,7 +1,7 @@
 ---
 title: "README"
 author: ""
-date: "01/31/2025"
+date: "05/21/2025"
 output: pdf_document
 ---
 
@@ -9,12 +9,47 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# 1. Architecture of the folders
+
+## code
+
+This folder contains the codes for reproducing the analysis in Sections 5, 6 and the supplementary material of the paper (simulation studies and real data studies).
+
+* **simul.R**: All results of simulation in the main manuscript (Section 5) can be reproduced by this file.
+* **simul_supp.R**: All results of simulation in the supplementary materials (Section S9) can be reproduced by this file.
+* **simul_CV.R**: Tuning parameters for simulation in the main manuscript (Section 5) can be selected by this file.
+* **data_analysis.R**: All results of real data analysis in the main manuscript (Section 6) and the supplementary materials (Section S8) can be reproduced by this file.
+
+There is also a sub-folder named "functions" which contains the codes for functions to implement our proposed methods and others.
+
+* **spcovreg.R**: functions to implement our proposed method.
+* **spcovreg_basic.R**: some simple functions such as the soft thresholding operator which have been used in spcovreg.R, simul.R, simul_supp.R, simul_CV.R and data_analysis.R.
+* **covreg_em.R**: functions to implement the covariance regression by Hoff and Niu (2012).
+
+## data
+
+This folder contains three sub-folders for all the utilized data and output from both simulation and real data analyses.
+
+* main: All data and output of simulation (Section 5) and real data analysis (Section 6) in the main manuscript are included in this folder. There are three types of RData files.
+  * **CVresult_n200p50q30_MA_set1.RData**: This is the pregenerated list of tuning parameters ($\alpha$ and $\lambda$) selected by running the code "simul_CV.R". This file is loaded when running the code "simul.R" (see the code). Other files for different settings (e.g. $n=500$ and $q=100$) can be obtained by running "simul_CV.R" after modifying the code.
+  * **fit_n200p50q30_MA_set1.RData**: This is the pregenerated set of results by running the code "simul.R". This file is loaded in Section 2 of this README file to produce numbers and figures. Other files for different settings (e.g. $n=500$ and $q=100$) can be obtained by running "simul.R" after modifying the code.
+  * **gbmdata_run.RData**: This is the pregenerated set of results by running the code "data_analysis.R". This file is loaded in Section 2 of this README file to produce figures.
+* supp: All the utilized data and output of simulation in the supplementary materials (Section S9) are included in this folder. There is one RData file in this folder.
+  * **supp_q1.RData**: This is the pregenerated set of results by running the code "simul_supp.R". This file is loaded in Section 2 of this README file to produce numbers and figures.
+* GBMdata: Raw data files for 178 patients with glioblastoma multiforme (GBM) from the REMBRANDT study (GSE108476). There are 6 raw files in this folder. The code for preprocessing these data can be found in "data_analysis.R".
+  * **clinical.data.csv**: This data include age and gender data for the patients with GBM or other diseases. We considered only the GBM patients.
+  * **gene names.csv**: This data contain the name of the genes considered.
+  * **expData_73.RData**: This data contain the gene expression for the 73 genes considered.
+  * **final_id.RData**: data for patient ID.
+  * **SNPname.RData**: list of names for the 118 SNPs considered.
+  * **SNPdata4.RData**: data for the 118 SNPs considered.
+
+# 2. Reproducing the results in the manuscript and the supplementary materials
 ```{r}
 ################# set working directory #################
 # please specify the path
 path="/Users/rakheon_kim/Desktop/Research/SparseCovReg/"
 ```
-
 
 ## Numbers for tables: MA(1) model under Setting 1 with n=200, p=50, q=30
 Numbers for other settings can be obtained by loading the R data for each setting.
@@ -175,6 +210,7 @@ ggplot(data = melted_R, aes(Var1, rev(Var2), fill = value))+geom_tile(color = "w
 ```{r}
 library(network)
 # Code for creating the picture can be found in data_analysis.R
+# Depending on the version of R, the layout of the network graph may look differ
 ```
 
 ```{r, fig.width=3.3, fig.height=3.3, echo=FALSE}
@@ -184,7 +220,7 @@ mat = covl_coef[,,18]*nz_coef[,,18]
 colnames(mat) = colnames(dat); rownames(mat) = colnames(dat)
 matcol = (mat<0)*4 + (mat>0)*2
 nn = as.network(mat, directed = FALSE)#, vertex.attr = mat)
-set.seed(6)  # for XZ[,18]
+set.seed(35)  # for XZ[,18]
 lp = list(niter=NULL, max.delta=NULL, area=NULL, cool.exp=NULL, repulse.rad=NULL,
           init=NULL, groups=NULL, rotation=NULL, layout.control=0.5, constraints=NULL,
           round = TRUE, digits = 10)
@@ -196,7 +232,7 @@ mat = covl_coef[,,3]*nz_coef[,,3]
 colnames(mat) = colnames(dat); rownames(mat) = colnames(dat)
 matcol = (mat<0)*4 + (mat>0)*2
 nn = as.network(mat, directed = FALSE)#, vertex.attr = mat)
-set.seed(17)  # for XZ[,3]
+set.seed(28)  # for XZ[,3]
 lp = list(niter=NULL, max.delta=NULL, area=NULL, cool.exp=NULL, repulse.rad=NULL,
           init=NULL, groups=NULL, rotation=NULL, layout.control=0.5, constraints=NULL,
           round = TRUE, digits = 10)
