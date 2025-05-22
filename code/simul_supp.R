@@ -14,20 +14,20 @@ source(paste0(path,"code/functions/spcovreg.R"))
 source(paste0(path,"code/functions/covreg_em.r")) 
 
 # Basic Setting for q=1 (For different q, adjust below)
-num_simu = 20
-n=200; p=2; q=1    # q: either 1,3,5 or 10
-lambda_seq = seq(1.0,0.1,-0.01)
-alpha_seq = c(0.25,0.5,0.75)
-covl_lambmin = numeric(num_simu); covl_almin = numeric(num_simu)
-S_diff = numeric(num_simu); ST_diff = S_diff; lse_diff = S_diff; covl_diff = S_diff; covlpd_diff = S_diff; covreg_diff = S_diff; covreg_mcmc_diff = S_diff; covl_diff3 = S_diff
-coef_evalmin = matrix(NA, nrow=num_simu, ncol=q+1)
+num_simu = 20                                       # number of simulations
+n=200; p=2; q=1    # q: either 1,3,5 or 10          # n: sample size, p: number of response variables, q: number of covariates
+lambda_seq = seq(1.0,0.1,-0.01)                     # sequence of lambda considered
+alpha_seq = c(0.25,0.5,0.75)                        # sequence of alpha considered 
+covl_lambmin = numeric(num_simu); covl_almin = numeric(num_simu)    # list of selected tuning parameters, lambda and alpha, by cross validation
+S_diff = numeric(num_simu); ST_diff = S_diff; lse_diff = S_diff; covl_diff = S_diff; covlpd_diff = S_diff; covreg_diff = S_diff; covreg_mcmc_diff = S_diff; covl_diff3 = S_diff     # storage for summarizing individual covariance matrix estimation error
+coef_evalmin = matrix(NA, nrow=num_simu, ncol=q+1)  # storage for minimum eigenvalue (will be used for PD adjustment)
 
 ################# run simulations #################
 for (ii in 1:num_simu){
   print(ii)
   set.seed(10000*ii)
   
-  z = matrix(runif(n*q), ncol=q)
+  z = matrix(runif(n*q), ncol=q)         # continous (uniform) covariates
   if (q==1){
     z = cbind(z, z^2)
   } else if(q==3){
@@ -40,28 +40,28 @@ for (ii in 1:num_simu){
   B0 = matrix(c(1,-1,1,1), ncol=2)
   C0 = B0 %*% diag(c(1,1/3)) %*% t(B0) # diag(2) # B0 %*% diag(c(1,1/3)) %*% t(B0)
   z1 = cbind(matrix(1,nrow=n,ncol=1), z[,1])
-  Sigma_indiv = array(0, dim=c(p,p,n))
+  Sigma_indiv = array(0, dim=c(p,p,n))          # list of subject-specific covariance matrices
   dat = matrix(0, nrow = n, ncol = p)
   for (i in 1:n){
     Sigma_indiv[1:2,1:2,i] = (C0/2) + (B0/2)%*%z1[i,]%*%t(z1[i,])%*%t(B0/2)
-    dat[i,] = rmvnorm(1,mean=rep(0,p),sigma=Sigma_indiv[,,i])
+    dat[i,] = rmvnorm(1,mean=rep(0,p),sigma=Sigma_indiv[,,i])     # generate the normal response for each subject using the subject-specific covariance matrix
   }
   
   ####################### DenseSample & SparseSample #######################
   
-  S=cov(dat)*(n-1)/n  
+  S=cov(dat)*(n-1)/n                                              # sample covariance matrix
   print("sample est done")
   soft_cv = threshold.cv(dat, method = "soft", thresh.len = 200, n.cv = 10, norm = "F", seed = 123)
-  ST = soft(S, soft_cv$parameter.opt); diag(ST)=diag(S)
+  ST = soft(S, soft_cv$parameter.opt); diag(ST)=diag(S)           # soft thresholding estimator
   print("soft-threshold est done")
   
   ####################### DenseCovReg #######################
   
   z_mean = apply(z,2,mean); z_sd = apply(z,2,sd)
   zs = scale(z)
-  XZ = cbind(matrix(1,nrow=n,ncol=1), zs)
-  Ymat = matrix(NA, nrow = n, ncol = p*(p-1)/2)
-  Ymat_diag = matrix(NA, nrow = n, ncol = p)
+  XZ = cbind(matrix(1,nrow=n,ncol=1), zs)                   # scaled covariates with intercept term (colum of ones)
+  Ymat = matrix(NA, nrow = n, ncol = p*(p-1)/2)             # cross-products of the demeaned response variables
+  Ymat_diag = matrix(NA, nrow = n, ncol = p)                # square of the demeaned response variables
   ij = 0
   for (i in 1:(p-1)){
     for (j in (i+1):p){
@@ -74,19 +74,19 @@ for (ii in 1:num_simu){
     Ymat_diag[,i]=(dat[,i]-mean(dat[,i]))^2
   }
   
-  XZns = cbind(matrix(1,nrow=n,ncol=1), z)
-  lse_est = solve(t(XZns)%*%XZns)%*%t(XZns)%*%Ymat
-  lse_est_diag = solve(t(XZns)%*%XZns)%*%t(XZns)%*%Ymat_diag
+  XZns = cbind(matrix(1,nrow=n,ncol=1), z)                      # non-scaled covariates with intercept term (colum of ones)
+  lse_est = solve(t(XZns)%*%XZns)%*%t(XZns)%*%Ymat              # LSE estimator of the proposed covariance regression coefficients for off-diagonals
+  lse_est_diag = solve(t(XZns)%*%XZns)%*%t(XZns)%*%Ymat_diag    # LSE estimator of the proposed covariance regression coefficients for diagonals
   
   ####################### CovReg #######################
 
-  covreg_indiv=array(0, c(p,p,n))
+  covreg_indiv=array(0, c(p,p,n))                               # list of estimated subject-specific covariance matrices by EM in Hoff and Niu (2012)
   dats = scale(dat, scale=FALSE)
-  covreg_res = covreg.em(dats,XZns[,1:(q+1)],R=1,tol = 0.000000001)
+  covreg_res = covreg.em(dats,XZns[,1:(q+1)],R=1,tol = 0.000000001)   # If we use smaller tol, the result is worse.
   for (k in 1:n){
     covreg_indiv[,,k]=covreg_res$S0+covreg_res$B%*%XZns[k,1:(q+1)]%*%t(XZns[k,1:(q+1)])%*%t(covreg_res$B)
   }
-  covreg_indiv_mcmc=array(0, c(p,p,n))
+  covreg_indiv_mcmc=array(0, c(p,p,n))                          # list of estimated subject-specific covariance matrices by MCMC in Hoff and Niu (2012)
   datfr = as.data.frame(cbind(scale(dat, scale = F, center = T), z[,1:q])) # XZ[,2:(q+1)])) # z[,1:q]))
   r_names = paste0("r", 1:p)
   c_names = paste0("c", 1:q)
@@ -118,6 +118,7 @@ for (ii in 1:num_simu){
   covl_res = spcovreg(Xtilde=XZ, Ytilde0=Ymat_diag, Ytilde=Ymat, lambda1=(1-covl_almin[ii])*covl_lambmin[ii], lambda2 = covl_almin[ii]*covl_lambmin[ii], eps = 0.000001)
   print("sparsecovreg done")
   
+  ### back-scaling to adjust for the scaled covariates
   z_sd_mat = matrix(c(1,z_sd), nrow = ncol(XZ), ncol = p*(p-1)/2)
   z_mean_mat = matrix(c(0,z_mean), nrow = ncol(XZ), ncol = p*(p-1)/2)
   covl_beta = covl_res$beta/z_sd_mat   #  covl_res$beta/c(1,z_sd)
@@ -135,6 +136,7 @@ for (ii in 1:num_simu){
   covl_res3 = spcovreg(Xtilde=XZ[,1:(q+1)], Ytilde0=Ymat_diag, Ytilde=Ymat, lambda1=(1-covl_cv3$alpha_min)*covl_cv3$lambda_min, lambda2 = covl_cv3$alpha_min*covl_cv3$lambda_min, eps = 0.000001)
   print("covl done")
   
+  ### back-scaling to adjust for the scaled covariates
   z_sd_mat = matrix(c(1,z_sd[1:q]), nrow = ncol(XZ[,1:(q+1)]), ncol = p*(p-1)/2)
   z_mean_mat = matrix(c(0,z_mean[1:q]), nrow = ncol(XZ[,1:(q+1)]), ncol = p*(p-1)/2)
   covl_beta3 = covl_res3$beta/z_sd_mat   #  covl_res$beta/c(1,z_sd)
@@ -148,9 +150,9 @@ for (ii in 1:num_simu){
   
   ####################### Saving results #######################
   
-  lse_coef=array(0, c(p,p,q+1))
-  covl_coef=array(0, c(p,p,q+1))
-  covlpd_coef=array(0, c(p,p,q+1))
+  lse_coef=array(0, c(p,p,q+1))                 # estimated population-level covariance matrix and covariate effects by LSE
+  covl_coef=array(0, c(p,p,q+1))                # estimated population-level covariance matrix and covariate effects by our proposed sparse covariance regression
+  covlpd_coef=array(0, c(p,p,q+1))              # estimated population-level covariance matrix and covariate effects by our proposed sparse covariance regression with adjustment for positive definiteness
   for (k in 1:(q+1)){
     lse_coef[,,k] = intomat(lse_est[k,], p)
     diag(lse_coef[,,k]) = lse_est_diag[k,]
@@ -158,6 +160,7 @@ for (ii in 1:num_simu){
     diag(covl_coef[,,k]) = covl_beta0[k,]
     coef_evalmin[ii,k] = eigen(covl_coef[,,k])$values[p]
   }
+  ### adjusting for positive definiteness
   covlpd_coef=covl_coef
   tempmat = covl_coef[,,1]
   for (k in 2:(q+1)){
@@ -178,12 +181,12 @@ for (ii in 1:num_simu){
     diag(covl_coef3[,,k]) = covl_beta03[k,]
   }
   
-  S_indiv=array(0, c(p,p,n)); S_indiv[1:p,1:p,]=S
-  ST_indiv=array(0, c(p,p,n)); ST_indiv[1:p,1:p,]=ST
-  lse_indiv=array(0, c(p,p,n))
-  covl_indiv=array(0, c(p,p,n))
-  covlpd_indiv=array(0, c(p,p,n))
-  covl_indiv3=array(0, c(p,p,n))
+  S_indiv=array(0, c(p,p,n)); S_indiv[1:p,1:p,]=S            # list of estimated subject-specific covariance matrices by the sample covariance matrix
+  ST_indiv=array(0, c(p,p,n)); ST_indiv[1:p,1:p,]=ST         # list of estimated subject-specific covariance matrices by the soft thresholding estimator
+  lse_indiv=array(0, c(p,p,n))                               # list of estimated subject-specific covariance matrices by LSE
+  covl_indiv=array(0, c(p,p,n))                              # list of estimated subject-specific covariance matrices by our proposed sparse covariance regression
+  covlpd_indiv=array(0, c(p,p,n))                            # list of estimated subject-specific covariance matrices by our proposed sparse covariance regression with adjustment for positive definiteness
+  covl_indiv3=array(0, c(p,p,n))                             # list of estimated subject-specific covariance matrices by our proposed sparse covariance regression with linear terms only
   for (i in 1:n){
     lse_indiv[,,i] = lse_coef[,,1]
     covl_indiv[,,i] = covl_coef[,,1]

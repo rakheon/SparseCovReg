@@ -18,6 +18,7 @@ source(paste0(path,"code/functions/spcovreg_basic.R"))
 source(paste0(path,"code/functions/spcovreg.R"))
 source(paste0(path,"code/functions/covreg_em.r")) 
 
+############ data preprocessing ############
 load(file=paste0(path,"data/GBMdata/expData_73.RData"))
 load(file=paste0(path,"data/GBMdata/SNPdata4.RData"))
 load(file=paste0(path,"data/GBMdata/SNPname.RData"))
@@ -39,6 +40,7 @@ z_impute = mice(zz, m=1, seed = 1)
 z[,119][is.na(agetemp)]=(z_impute$imp$age[,1]*5+10); z[,120][is.na(gentemp)]=(z_impute$imp$gender[,1]-1)
 dat=dat[demodat$dtype=="GBM",]; z=z[demodat$dtype=="GBM",]
 
+############ demean the response variables by regression ############
 set.seed(1)
 meancv = cv.glmnet(x=z,y=dat,family = "mgaussian")
 meanreg = glmnet(x=z,y=dat,family = "mgaussian", lambda = meancv$lambda.min)
@@ -50,17 +52,17 @@ dat_resid=as.matrix(dat_resid)
 dat = dat_resid
 dat = scale(dat)
 
-####################### estimation #######################
+####################### covariance estimation #######################
 
-n = dim(dat)[1]; p = dim(dat)[2]; q = dim(z)[2]
-lambda_seq = seq(1.0,0.1,-0.01)
-alpha_seq = c(0.25,0.5,0.75)
+n = dim(dat)[1]; p = dim(dat)[2]; q = dim(z)[2]         # n: sample size, p: number of response variables, q: number of covariates
+lambda_seq = seq(1.0,0.1,-0.01)                         # sequence of lambda considered
+alpha_seq = c(0.25,0.5,0.75)                            # sequence of alpha considered
 
 z_mean = apply(z,2,mean); z_sd = apply(z,2,sd)
 zs = scale(z)
-XZ = cbind(matrix(1,nrow=n,ncol=1), zs)
-Ymat = matrix(NA, nrow = n, ncol = p*(p-1)/2)
-Ymat_diag = matrix(NA, nrow = n, ncol = p)
+XZ = cbind(matrix(1,nrow=n,ncol=1), zs)                 # scaled covariates with intercept term (colum of ones)
+Ymat = matrix(NA, nrow = n, ncol = p*(p-1)/2)           # cross-products of the demeaned response variables
+Ymat_diag = matrix(NA, nrow = n, ncol = p)              # square of the demeaned response variables
 ij = 0
 for (i in 1:(p-1)){
   for (j in (i+1):p){
@@ -73,22 +75,23 @@ for (i in 1:p){
   Ymat_diag[,i]=(dat[,i]-mean(dat[,i]))^2
 }
 
-XZns = cbind(matrix(1,nrow=n,ncol=1), z)
-lse_est = solve(t(XZns)%*%XZns)%*%t(XZns)%*%Ymat
-lse_est_diag = solve(t(XZns)%*%XZns)%*%t(XZns)%*%Ymat_diag
+XZns = cbind(matrix(1,nrow=n,ncol=1), z)                      # non-scaled covariates with intercept term (colum of ones)
+lse_est = solve(t(XZns)%*%XZns)%*%t(XZns)%*%Ymat              # LSE estimator of the proposed covariance regression coefficients for off-diagonals
+lse_est_diag = solve(t(XZns)%*%XZns)%*%t(XZns)%*%Ymat_diag    # LSE estimator of the proposed covariance regression coefficients for diagonals
 
-S=cov(dat)*(n-1)/n
+S=cov(dat)*(n-1)/n                                            # sample covariance matrix
 soft_cv = threshold.cv(dat, method = "soft", thresh.len = 200, n.cv = 10, norm = "F", seed = 123)
-ST = soft(S, soft_cv$parameter.opt); diag(ST)=diag(S)
+ST = soft(S, soft_cv$parameter.opt); diag(ST)=diag(S)         # soft thresholding estimator
 print("common est done")
 
 covl_cv2 = cv.spcovreg(X=XZ, Y0=Ymat_diag, Y=Ymat, lambda_seq = lambda_seq, alpha_seq = alpha_seq, k = 5, cvseed = 9999999)
 covl_res = spcovreg(Xtilde=XZ, Ytilde0=Ymat_diag, Ytilde=Ymat, lambda1=(1-covl_cv2$alpha_min)*covl_cv2$lambda_min, lambda2 = covl_cv2$alpha_min*covl_cv2$lambda_min, eps = 0.000001)
 
+### back-scaling to adjust for the scaled covariates
 z_sd_mat = matrix(c(1,z_sd), nrow = q+1, ncol = p*(p-1)/2)
 z_mean_mat = matrix(c(0,z_mean), nrow = q+1, ncol = p*(p-1)/2)
-covl_beta = covl_res$beta/z_sd_mat   #  covl_res$beta/c(1,z_sd)
-covl_intadj = covl_res$beta*z_mean_mat/z_sd_mat     #  covl_res$beta*(c(0,z_mean)/c(1,z_sd))
+covl_beta = covl_res$beta/z_sd_mat  
+covl_intadj = covl_res$beta*z_mean_mat/z_sd_mat    
 covl_beta[1,] = covl_beta[1,]-apply(covl_intadj,2,sum)
 z_sd_mat = matrix(c(1,z_sd), nrow = q+1, ncol = p)
 z_mean_mat = matrix(c(0,z_mean), nrow = q+1, ncol = p)
@@ -97,9 +100,9 @@ covl_intadj0 = covl_res$beta0*z_mean_mat/z_sd_mat
 covl_beta0[1,] = covl_beta0[1,]-apply(covl_intadj0,2,sum)
 
 coef_evalmin = numeric(q+1)
-lse_coef=array(0, c(p,p,q+1))
-covl_coef=array(0, c(p,p,q+1))
-covlpd_coef=array(0, c(p,p,q+1))
+lse_coef=array(0, c(p,p,q+1))                # estimated population-level covariance matrix and covariate effects by LSE
+covl_coef=array(0, c(p,p,q+1))               # estimated population-level covariance matrix and covariate effects by our proposed sparse covariance regression
+covlpd_coef=array(0, c(p,p,q+1))             # estimated population-level covariance matrix and covariate effects by our proposed sparse covariance regression with adjustment for positive definiteness
 for (k in 1:(q+1)){
   lse_coef[,,k] = intomat(lse_est[k,], p)
   diag(lse_coef[,,k]) = lse_est_diag[k,]
@@ -107,6 +110,7 @@ for (k in 1:(q+1)){
   diag(covl_coef[,,k]) = covl_beta0[k,]
   coef_evalmin[k] = eigen(covl_coef[,,k])$values[p]
 }
+### adjusting for positive definiteness
 covlpd_coef=covl_coef
 ccc = max(0, (-sum(coef_evalmin[-1]*(coef_evalmin[-1]<0)))-coef_evalmin[1])
 epsilon = ccc/(1+ccc)
@@ -116,19 +120,18 @@ covlpd_coef[,,1] = covlpd_coef[,,1] + epsilon*diag(p)
 
 ####################### inference #######################
 XZns = cbind(matrix(1,nrow=n,ncol=1), z)
-M = matrix(NA, nrow = q+1, ncol = q+1)
+M = matrix(NA, nrow = q+1, ncol = q+1)                 # the M matrix as defined by the debiased lasso in Javanmard and Montanari (2014)
 for (jj in 1:(q+1)){
   xm_max = n^(1/2)+1; max_try = 10
   while ((xm_max > n^(1/2))&(max_try>1)){
     M[jj,] = debiasingMatrix(t(XZns)%*%XZns/n, FALSE, n, jj, bound = 2*sqrt(log((q+1)*p*(p+1)/2)/n), linesearch = T, max_try = max_try)
-    xm_max = max(abs(XZns%*%M[jj,])) # apply(abs(XZ%*%t(M)), 2, max)
+    xm_max = max(abs(XZns%*%M[jj,])) 
     max_try = max_try-1
   }
   print(max_try)
 }
-covl_betaU = covl_beta + (1/n)*M%*%crossprod(XZns, Ymat - XZns%*%covl_beta)
-covl_beta0U = covl_beta0 + (1/n)*M%*%crossprod(XZns, Ymat_diag - XZns%*%covl_beta0)
-covl_betaU_975 = covl_betaU*0; covl_betaU_025 = covl_betaU*0
+covl_betaU = covl_beta + (1/n)*M%*%crossprod(XZns, Ymat - XZns%*%covl_beta)          # the debiased estimator of regression coefficient for off-diagonals
+covl_betaU_975 = covl_betaU*0; covl_betaU_025 = covl_betaU*0                         # the 95% confidence interval bound of off-diagonals with empirical variance of W
 Ahalf = M%*%t(XZns)
 Emat = Ymat - XZns%*%covl_betaU
 coef_err = Ahalf%*%Emat/n
@@ -159,6 +162,7 @@ rm(list=c("covl_res","Emat","Ymat","lse_coef","covlLo_coef","covlpd_coef","covlU
 #save.image(file=paste0(path,"data/main/gbmdata_run.RData"))
 
 ###################### Figure 3 ######################
+### reorder the genes based on the modules of genes
 idsel=c( 64:66,58,61,62,57,72, 59,56,55, 25:27,15,13,17,22,16,20,21,23,24,12,14,18,19,48,49,50,45,46,47, 51:53,54,8,9,28,29,30,31,1, 40,44,43,42,41,36,37,39, 35,38,34,33,32,3,67,68,69,11,10,2,71,6,7,4,5, 73,70,63,60)
 # left panel
 Rn= ST[idsel,idsel]
